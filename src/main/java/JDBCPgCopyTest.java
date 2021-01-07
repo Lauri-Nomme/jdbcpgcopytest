@@ -33,7 +33,7 @@ public class JDBCPgCopyTest {
     private static void printStats(String name, Fixture fixture, ImmutableMap<String, Long> stats) {
         Long total = Optional.ofNullable(stats.get("total")).orElse(0L);
         System.out.println(
-                "= " + name + " " + fixture.numRows() + " rows =\n" +
+                "= " + name + ";  numRows = " + fixture.numRows() + "; batchSize = " + fixture.batchSize() + " =\n" +
                         stats.entrySet().stream()
                                 .map(measurement -> Joiner.on("\t").join(
                                         ImmutableList.of(
