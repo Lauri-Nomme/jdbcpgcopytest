@@ -1,6 +1,9 @@
 local pg
 
------------- 1 thread -------------------------------------
+![stts](stats.png)
+
+```
+-- 1 thread -------------------------------------
 
 = batchedInsert;  numRows = 22000000; batchSize = 100000 =
 total	174862ms	100.0%
@@ -51,7 +54,7 @@ commit	12ms	0.1%
 11000000 rows, 458333.3 rows/sec
 
 ------------ 4 threads ------------------------------------
-
+    
 = batchedInsert;  numRows = 22000000; batchSize = 100000 	total time = 83259ms	265060.2 rows/sec =
 total	82053ms	100.0%
 setObject	1053ms	1.3%
@@ -224,3 +227,4 @@ writeToCopy	53ms	0.3%
 endCopy	17399ms	98.2%
 commit	5ms	0.0%
 2750000 rows, 161764.7 rows/sec
+```
