@@ -3,24 +3,35 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import java.sql.SQLException;
-import java.util.Locale;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class JDBCPgCopyTest {
     public static void main(String[] args) throws SQLException {
         Fixture fixture = new Fixture(
-                2_000_000,
+                22_000_000,
                 100_000,
                 true,
                 false,
-                1234, 23456, 1092840124L
+                new Holder(Integer.class, 1234), new Holder(Integer.class, 23456), new Holder(Long.class, 1092840124L)
         );
-        printStats("batchedInsert", new BatchedInsert(fixture, args[0]).run());
+
+        if (args.length < 2 || Arrays.asList(args).contains("batched")) {
+            try (BatchedInsert batchedInsert = new BatchedInsert(fixture, args[0])) {
+                printStats("batchedInsert", batchedInsert.run());
+            }
+        }
+
+        if (args.length < 2 || Arrays.asList(args).contains("copy")) {
+            try (CopyInsert copyInsert = new CopyInsert(fixture, args[0])) {
+                printStats("copyInsert", copyInsert.run());
+            }
+        }
     }
 
     private static void printStats(String name, ImmutableMap<String, Long> stats) {
-        Long total = stats.get("total");
+        Long total = Optional.ofNullable(stats.get("total")).orElse(0L);
         System.out.println(
                 "= " + name + " =\n" +
                 stats.entrySet().stream()

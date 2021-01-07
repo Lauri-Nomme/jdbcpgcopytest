@@ -5,13 +5,13 @@ import java.util.List;
 import java.util.Map;
 
 public class Fixture {
-    private final Comparable<?>[] fields;
+    private final Holder<?>[] fields;
     private final long numRows;
     private final long batchSize;
     private final boolean cleanup;
-    private boolean unlogged;
+    private final boolean unlogged;
 
-    public Fixture(long numRows, long batchSize, boolean cleanup, boolean unlogged, Comparable<?>... fields) {
+    public Fixture(long numRows, long batchSize, boolean cleanup, boolean unlogged, Holder<?>... fields) {
         this.numRows = numRows;
         this.batchSize = batchSize;
         this.cleanup = cleanup;
@@ -23,14 +23,14 @@ public class Fixture {
         List<Map.Entry<Class<?>, String>> res = new ArrayList<>();
 
         for (int i = 0; i < fields.length; i++) {
-            Comparable<?> field = fields[i];
-            res.add(Maps.immutableEntry(field.getClass(), "f" + i));
+            Holder<?> field = fields[i];
+            res.add(Maps.immutableEntry(field.clazz(), "f" + i));
         }
 
         return res;
     }
 
-    public Comparable<?>[] fieldValues() {
+    public Holder<?>[] fieldValues() {
         return fields;
     }
 

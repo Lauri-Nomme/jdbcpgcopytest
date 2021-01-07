@@ -1,31 +1,19 @@
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static java.lang.System.nanoTime;
 import static java.util.Collections.nCopies;
 
-public class BatchedInsert {
-    private final Fixture fixture;
-    private final String url;
-    private Connection connection;
-    private final String tableName = BatchedInsert.class.getSimpleName();
-
-    public BatchedInsert(Fixture fixture, String url) {
-        this.fixture = fixture;
-        this.url = url;
+public class BatchedInsert extends TestBase {
+    public BatchedInsert(Fixture fixture, String url) throws SQLException {
+        super(BatchedInsert.class.getSimpleName(), fixture, url);
     }
 
+    @Override
     public ImmutableMap<String, Long> run() throws SQLException {
-        connection = DriverManager.getConnection(url);
-        connection.setAutoCommit(false);
         createTable();
         ImmutableMap<String, Long> stats = insert();
 
@@ -37,7 +25,7 @@ public class BatchedInsert {
     }
 
     private ImmutableMap<String, Long> insert() throws SQLException {
-        Comparable<?>[] fields = fixture.fieldValues();
+        Holder<?>[] fields = fixture.fieldValues();
         String sql = "INSERT INTO " + tableName + " VALUES(" +
                 Joiner.on(",").join(
                         nCopies(fields.length, "?")
@@ -54,9 +42,10 @@ public class BatchedInsert {
                 for (long batchRowIndex = 0; batchRowIndex < fixture.batchSize(); batchRowIndex++) {
                     setObjectTime -= nanoTime();
                     for (int fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {
-                        statement.setObject(1 + fieldIndex, fields[fieldIndex]);
+                        statement.setObject(1 + fieldIndex, fields[fieldIndex].value());
                     }
                     setObjectTime += nanoTime();
+
                     addBatchTime -= nanoTime();
                     statement.addBatch();
                     addBatchTime += nanoTime();
@@ -81,36 +70,4 @@ public class BatchedInsert {
         );
     }
 
-    private void dropTable() throws SQLException {
-        String sql = "DROP TABLE " + tableName;
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.execute();
-        }
-        connection.commit();
-    }
-
-    private void createTable() throws SQLException {
-        String sql = "CREATE " + (fixture.unLogged() ? "UNLOGGED " : "") + "TABLE " + tableName +
-                "(" + Joiner.on(",").join(fieldsToColumnDefs(fixture.fields())) + ")";
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.execute();
-        }
-        connection.commit();
-    }
-
-    private List<String> fieldsToColumnDefs(List<Map.Entry<Class<?>, String>> fields) {
-        return fields.stream()
-                .map(field -> field.getValue() + " " + columnPgType(field.getKey()))
-                .collect(Collectors.toList());
-    }
-
-    private String columnPgType(Class<?> column) {
-        if (column == Integer.class) {
-            return "int4";
-        } else if (column == Long.class) {
-            return "int8";
-        }
-
-        throw new IllegalStateException(column.getName());
-    }
 }
