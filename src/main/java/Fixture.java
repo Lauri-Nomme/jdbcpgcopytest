@@ -8,12 +8,14 @@ public class Fixture {
     private final Holder<?>[] fields;
     private final long numRows;
     private final long batchSize;
+    private final long threads;
     private final boolean cleanup;
     private final boolean unlogged;
 
-    public Fixture(long numRows, long batchSize, boolean cleanup, boolean unlogged, Holder<?>... fields) {
+    public Fixture(long numRows, long batchSize, long threads, boolean cleanup, boolean unlogged, Holder<?>... fields) {
         this.numRows = numRows;
         this.batchSize = batchSize;
+        this.threads = threads;
         this.cleanup = cleanup;
         this.unlogged = unlogged;
         this.fields = fields;
@@ -40,6 +42,10 @@ public class Fixture {
 
     public long batchSize() {
         return batchSize;
+    }
+
+    public long threads() {
+        return threads;
     }
 
     public boolean cleanup() {
