@@ -14,35 +14,36 @@ public class JDBCPgCopyTest {
                 100_000,
                 true,
                 false,
-                new Holder(Integer.class, 1234), new Holder(Integer.class, 23456), new Holder(Long.class, 1092840124L)
+                new Holder<>(Integer.class, 1234), new Holder<>(Integer.class, 23456), new Holder<>(Long.class, 1092840124L)
         );
 
         if (args.length < 2 || Arrays.asList(args).contains("batched")) {
             try (BatchedInsert batchedInsert = new BatchedInsert(fixture, args[0])) {
-                printStats("batchedInsert", batchedInsert.run());
+                printStats("batchedInsert", fixture, batchedInsert.run());
             }
         }
 
         if (args.length < 2 || Arrays.asList(args).contains("copy")) {
             try (CopyInsert copyInsert = new CopyInsert(fixture, args[0])) {
-                printStats("copyInsert", copyInsert.run());
+                printStats("copyInsert", fixture, copyInsert.run());
             }
         }
     }
 
-    private static void printStats(String name, ImmutableMap<String, Long> stats) {
+    private static void printStats(String name, Fixture fixture, ImmutableMap<String, Long> stats) {
         Long total = Optional.ofNullable(stats.get("total")).orElse(0L);
         System.out.println(
-                "= " + name + " =\n" +
-                stats.entrySet().stream()
-                        .map(measurement -> Joiner.on("\t").join(
-                                ImmutableList.of(
-                                        measurement.getKey(),
-                                        TimeUnit.NANOSECONDS.toMillis(measurement.getValue()) + "ms",
-                                        String.format(Locale.ROOT, "%.1f%%", measurement.getValue() * 100d / total)
-                                )
-                        ))
-                        .collect(Collectors.joining("\n"))
+                "= " + name + " " + fixture.numRows() + " rows =\n" +
+                        stats.entrySet().stream()
+                                .map(measurement -> Joiner.on("\t").join(
+                                        ImmutableList.of(
+                                                measurement.getKey(),
+                                                TimeUnit.NANOSECONDS.toMillis(measurement.getValue()) + "ms",
+                                                String.format(Locale.ROOT, "%.1f%%", measurement.getValue() * 100d / total)
+                                        )
+                                ))
+                                .collect(Collectors.joining("\n")) + "\n" +
+                        String.format(Locale.ROOT, "%.1f rows/sec", fixture.numRows() * 1d / TimeUnit.NANOSECONDS.toSeconds(total))
         );
     }
 }
